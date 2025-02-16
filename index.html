@@ -174,7 +174,7 @@
             const cell = playerGridCells[index];
 
             if (playerShips.includes(index)) {
-                cell.classList.add('hit'); // AI Hits Now Properly Display
+                cell.classList.add('hit'); // ✅ AI Hits Turn Player Grid Red
                 playerShips.splice(playerShips.indexOf(index), 1);
             } else {
                 cell.classList.add('miss');
