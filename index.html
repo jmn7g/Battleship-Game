@@ -45,12 +45,13 @@
     <div id="ai-grid" class="grid"></div>
     <button onclick="startGame()">Start Game</button>
     <script>
-        const playerShips = [];
-        const aiShips = [];
+        let playerShips = [];
+        let aiShips = [];
         let gameActive = false;
 
         function createGrid(id, isAI = false) {
             const grid = document.getElementById(id);
+            grid.innerHTML = '';
             for (let i = 0; i < 100; i++) {
                 const cell = document.createElement('div');
                 cell.classList.add('cell');
@@ -63,6 +64,7 @@
         }
         
         function placeShipsRandomly(shipArray) {
+            shipArray.length = 0;
             const shipSizes = [2, 3, 3, 4, 5];
             for (let size of shipSizes) {
                 let placed = false;
@@ -87,8 +89,9 @@
         }
         
         function startGame() {
-            playerShips.length = 0;
-            aiShips.length = 0;
+            gameActive = true;
+            createGrid('player-grid');
+            createGrid('ai-grid', true);
             placeShipsRandomly(playerShips);
             placeShipsRandomly(aiShips);
             document.querySelectorAll('#player-grid .cell').forEach((cell, index) => {
@@ -96,7 +99,6 @@
                     cell.classList.add('ship');
                 }
             });
-            gameActive = true;
         }
         
         function playerAttack(index, cell) {
@@ -108,14 +110,15 @@
                 cell.classList.add('miss');
             }
             if (aiShips.length === 0) {
-                alert('You win!');
-                gameActive = false;
+                alert('You win! Restarting game...');
+                startGame();
             } else {
                 setTimeout(aiTurn, 500);
             }
         }
         
         function aiTurn() {
+            if (!gameActive) return;
             let index;
             do {
                 index = Math.floor(Math.random() * 100);
@@ -129,14 +132,15 @@
                 cell.classList.add('miss');
             }
             if (playerShips.length === 0) {
-                alert('AI wins!');
-                gameActive = false;
+                alert('AI wins! Restarting game...');
+                startGame();
             }
         }
         
         function initializeGame() {
             createGrid('player-grid');
             createGrid('ai-grid', true);
+            startGame();
         }
         
         initializeGame();
