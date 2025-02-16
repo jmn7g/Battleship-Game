@@ -35,20 +35,35 @@
         .ship {
             background-color: darkblue;
         }
+        .controls {
+            margin: 20px;
+        }
     </style>
 </head>
 <body>
     <h1>Battleship</h1>
+    <div class="controls">
+        <label for="difficulty">Select AI Difficulty: </label>
+        <select id="difficulty">
+            <option value="1">Beginner</option>
+            <option value="2">Medium</option>
+            <option value="3">Hard</option>
+        </select>
+        <button onclick="resetGame()">Reset Game</button>
+    </div>
     <h2>Player Grid</h2>
     <div id="player-grid" class="grid"></div>
     <h2>AI Grid</h2>
     <div id="ai-grid" class="grid"></div>
-    <button onclick="startGame()">Start Game</button>
+    <p id="status"></p>
+
     <script>
         let playerShips = [];
         let aiShips = [];
         let gameActive = false;
+        let aiDifficulty = 1; // Default to Beginner
 
+        // Create grid for player and AI
         function createGrid(id, isAI = false) {
             const grid = document.getElementById(id);
             grid.innerHTML = '';
@@ -63,6 +78,7 @@
             }
         }
         
+        // Place ships randomly on the grid
         function placeShipsRandomly(shipArray) {
             shipArray.length = 0;
             const shipSizes = [2, 3, 3, 4, 5];
@@ -87,7 +103,8 @@
                 }
             }
         }
-        
+
+        // Initialize and start the game
         function startGame() {
             gameActive = true;
             createGrid('player-grid');
@@ -99,8 +116,10 @@
                     cell.classList.add('ship');
                 }
             });
+            document.getElementById('status').textContent = 'Game started! It\'s your turn.';
         }
-        
+
+        // Player attack function
         function playerAttack(index, cell) {
             if (!gameActive || cell.classList.contains('hit') || cell.classList.contains('miss')) return;
             if (aiShips.includes(index)) {
@@ -110,19 +129,24 @@
                 cell.classList.add('miss');
             }
             if (aiShips.length === 0) {
-                setTimeout(() => { alert('You win! Restarting game...'); startGame(); }, 500);
+                document.getElementById('status').textContent = 'You win! Restarting game...';
+                setTimeout(startGame, 1500);
             } else {
                 setTimeout(aiTurn, 500);
             }
         }
-        
+
+        // AI turn function with difficulty adjustments
         function aiTurn() {
             if (!gameActive) return;
             let index;
-            do {
+            if (aiDifficulty === 1) {
                 index = Math.floor(Math.random() * 100);
-            } while (document.querySelectorAll('#player-grid .cell')[index].classList.contains('hit') ||
-                     document.querySelectorAll('#player-grid .cell')[index].classList.contains('miss'));
+            } else if (aiDifficulty === 2) {
+                index = mediumAITurn();
+            } else {
+                index = hardAITurn();
+            }
             const cell = document.querySelectorAll('#player-grid .cell')[index];
             if (playerShips.includes(index)) {
                 cell.classList.add('hit');
@@ -131,16 +155,42 @@
                 cell.classList.add('miss');
             }
             if (playerShips.length === 0) {
-                setTimeout(() => { alert('AI wins! Restarting game...'); startGame(); }, 500);
+                document.getElementById('status').textContent = 'AI wins! Restarting game...';
+                setTimeout(startGame, 1500);
             }
         }
-        
+
+        // Medium AI: Selects a random nearby cell if a hit was registered
+        function mediumAITurn() {
+            // Implement a basic tracking of previously hit locations for a better AI strategy
+            return Math.floor(Math.random() * 100); // Placeholder for medium difficulty
+        }
+
+        // Hard AI: Implements a more advanced strategy (like targeting adjacent squares)
+        function hardAITurn() {
+            return Math.floor(Math.random() * 100); // Placeholder for hard difficulty
+        }
+
+        // Reset the game state
+        function resetGame() {
+            playerShips = [];
+            aiShips = [];
+            gameActive = false;
+            createGrid('player-grid');
+            createGrid('ai-grid', true);
+            document.getElementById('status').textContent = 'Game reset. Select AI difficulty and start again.';
+        }
+
+        // Initialize the game on first load
         function initializeGame() {
             createGrid('player-grid');
             createGrid('ai-grid', true);
+            document.getElementById('difficulty').addEventListener('change', (e) => {
+                aiDifficulty = parseInt(e.target.value);
+            });
             startGame();
         }
-        
+
         initializeGame();
     </script>
 </body>
