@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Battleship</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+        }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(10, 30px);
+            gap: 2px;
+            margin: 20px auto;
+            width: 320px;
+        }
+        .cell {
+            width: 30px;
+            height: 30px;
+            background-color: lightblue;
+            border: 1px solid navy;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+        }
+        .hit {
+            background-color: red;
+        }
+        .miss {
+            background-color: gray;
+        }
+        .ship {
+            background-color: darkblue;
+        }
+    </style>
+</head>
+<body>
+    <h1>Battleship</h1>
+    <h2>Player Grid</h2>
+    <div id="player-grid" class="grid"></div>
+    <h2>AI Grid</h2>
+    <div id="ai-grid" class="grid"></div>
+    <button onclick="startGame()">Start Game</button>
+    <script>
+        const playerShips = [];
+        const aiShips = [];
+        let gameActive = false;
+
+        function createGrid(id, isAI = false) {
+            const grid = document.getElementById(id);
+            for (let i = 0; i < 100; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.dataset.index = i;
+                if (isAI) {
+                    cell.addEventListener('click', () => playerAttack(i, cell));
+                }
+                grid.appendChild(cell);
+            }
+        }
+        
+        function placeShipsRandomly(shipArray) {
+            const shipSizes = [2, 3, 3, 4, 5];
+            for (let size of shipSizes) {
+                let placed = false;
+                while (!placed) {
+                    const direction = Math.random() > 0.5 ? 'horizontal' : 'vertical';
+                    const start = Math.floor(Math.random() * 100);
+                    const indices = [];
+                    for (let i = 0; i < size; i++) {
+                        let index = direction === 'horizontal' ? start + i : start + i * 10;
+                        if (index >= 100 || (direction === 'horizontal' && Math.floor(index / 10) !== Math.floor(start / 10))) {
+                            indices.length = 0;
+                            break;
+                        }
+                        indices.push(index);
+                    }
+                    if (indices.length === size && !indices.some(idx => shipArray.includes(idx))) {
+                        shipArray.push(...indices);
+                        placed = true;
+                    }
+                }
+            }
+        }
+        
+        function startGame() {
+            playerShips.length = 0;
+            aiShips.length = 0;
+            placeShipsRandomly(playerShips);
+            placeShipsRandomly(aiShips);
+            document.querySelectorAll('#player-grid .cell').forEach((cell, index) => {
+                if (playerShips.includes(index)) {
+                    cell.classList.add('ship');
+                }
+            });
+            gameActive = true;
+        }
+        
+        function playerAttack(index, cell) {
+            if (!gameActive || cell.classList.contains('hit') || cell.classList.contains('miss')) return;
+            if (aiShips.includes(index)) {
+                cell.classList.add('hit');
+                aiShips.splice(aiShips.indexOf(index), 1);
+            } else {
+                cell.classList.add('miss');
+            }
+            if (aiShips.length === 0) {
+                alert('You win!');
+                gameActive = false;
+            } else {
+                setTimeout(aiTurn, 500);
+            }
+        }
+        
+        function aiTurn() {
+            let index;
+            do {
+                index = Math.floor(Math.random() * 100);
+            } while (document.querySelectorAll('#player-grid .cell')[index].classList.contains('hit') ||
+                     document.querySelectorAll('#player-grid .cell')[index].classList.contains('miss'));
+            const cell = document.querySelectorAll('#player-grid .cell')[index];
+            if (playerShips.includes(index)) {
+                cell.classList.add('hit');
+                playerShips.splice(playerShips.indexOf(index), 1);
+            } else {
+                cell.classList.add('miss');
+            }
+            if (playerShips.length === 0) {
+                alert('AI wins!');
+                gameActive = false;
+            }
+        }
+        
+        function initializeGame() {
+            createGrid('player-grid');
+            createGrid('ai-grid', true);
+        }
+        
+        initializeGame();
+    </script>
+</body>
+</html>
