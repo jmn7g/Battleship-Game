@@ -110,8 +110,7 @@
                 cell.classList.add('miss');
             }
             if (aiShips.length === 0) {
-                alert('You win! Restarting game...');
-                startGame();
+                setTimeout(() => { alert('You win! Restarting game...'); startGame(); }, 500);
             } else {
                 setTimeout(aiTurn, 500);
             }
@@ -132,8 +131,7 @@
                 cell.classList.add('miss');
             }
             if (playerShips.length === 0) {
-                alert('AI wins! Restarting game...');
-                startGame();
+                setTimeout(() => { alert('AI wins! Restarting game...'); startGame(); }, 500);
             }
         }
         
