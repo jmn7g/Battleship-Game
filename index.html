@@ -38,6 +38,10 @@
         .controls {
             margin: 20px;
         }
+        select, button {
+            padding: 5px 10px;
+            margin: 10px;
+        }
     </style>
 </head>
 <body>
@@ -55,7 +59,7 @@
     <div id="player-grid" class="grid"></div>
     <h2>AI Grid</h2>
     <div id="ai-grid" class="grid"></div>
-    <p id="status"></p>
+    <p id="status">Select AI difficulty and start the game.</p>
 
     <script>
         let playerShips = [];
@@ -104,7 +108,7 @@
             }
         }
 
-        // Initialize and start the game
+        // Start and initialize the game
         function startGame() {
             gameActive = true;
             createGrid('player-grid');
@@ -162,8 +166,8 @@
 
         // Medium AI: Selects a random nearby cell if a hit was registered
         function mediumAITurn() {
-            // Implement a basic tracking of previously hit locations for a better AI strategy
-            return Math.floor(Math.random() * 100); // Placeholder for medium difficulty
+            // Placeholder logic for medium difficulty AI
+            return Math.floor(Math.random() * 100);
         }
 
         // Hard AI: Implements a more advanced strategy (like targeting adjacent squares)
