@@ -82,13 +82,12 @@
         <h3>AI Ships Left: <span id="ai-ships-left">5</span></h3>
     </div>
 
-    <p id="status">Select AI difficulty and start the game.</p>
-
     <script>
         let playerShips = [];
         let aiShips = [];
         let gameActive = false;
         let aiDifficulty = 1;
+        let aiHitStack = []; // Stores AI hits for targeting adjacent cells
 
         function createGrid(id, isAI = false) {
             const grid = document.getElementById(id);
@@ -131,6 +130,7 @@
 
         function startGame() {
             gameActive = true;
+            aiHitStack = []; // Clear AI memory of hits
             createGrid('player-grid');
             createGrid('ai-grid', true);
             placeShipsRandomly(playerShips);
@@ -141,7 +141,6 @@
                 }
             });
             updateShipCount();
-            document.getElementById('status').textContent = 'Game started! It\'s your turn.';
         }
 
         function playerAttack(index, cell) {
@@ -154,7 +153,6 @@
             }
             updateShipCount();
             if (aiShips.length === 0) {
-                document.getElementById('status').textContent = 'You win! Restarting game...';
                 gameActive = false;
                 setTimeout(startGame, 2000);
             } else {
@@ -165,27 +163,46 @@
         function aiTurn() {
             if (!gameActive) return;
             let index;
-            do {
-                index = Math.floor(Math.random() * 100);
-            } while (document.querySelectorAll('#player-grid .cell')[index].classList.contains('hit') ||
-                     document.querySelectorAll('#player-grid .cell')[index].classList.contains('miss'));
+
+            if (aiHitStack.length > 0) {
+                index = getAdjacentHit(aiHitStack.pop());
+            } else {
+                do {
+                    index = Math.floor(Math.random() * 100);
+                } while (document.querySelectorAll('#player-grid .cell')[index].classList.contains('hit') ||
+                         document.querySelectorAll('#player-grid .cell')[index].classList.contains('miss'));
+            }
 
             const playerGridCells = document.querySelectorAll('#player-grid .cell');
             const cell = playerGridCells[index];
 
             if (playerShips.includes(index)) {
-                cell.classList.remove('ship'); // ✅ Fix: Remove ship class before marking as hit
-                cell.classList.add('hit'); // ✅ AI hits now turn blue ship blocks red
+                cell.classList.remove('ship');
+                cell.classList.add('hit');
                 playerShips.splice(playerShips.indexOf(index), 1);
+                aiHitStack.push(index); // Store the hit position for targeting adjacent cells
             } else {
                 cell.classList.add('miss');
             }
             updateShipCount();
             if (playerShips.length === 0) {
-                document.getElementById('status').textContent = 'AI wins! Restarting game...';
                 gameActive = false;
                 setTimeout(startGame, 2000);
             }
+        }
+
+        function getAdjacentHit(hitIndex) {
+            let possibleMoves = [];
+            let row = Math.floor(hitIndex / 10);
+            let col = hitIndex % 10;
+
+            if (col > 0) possibleMoves.push(hitIndex - 1); // Left
+            if (col < 9) possibleMoves.push(hitIndex + 1); // Right
+            if (row > 0) possibleMoves.push(hitIndex - 10); // Up
+            if (row < 9) possibleMoves.push(hitIndex + 10); // Down
+
+            return possibleMoves.find(move => !document.querySelectorAll('#player-grid .cell')[move].classList.contains('hit') &&
+                                              !document.querySelectorAll('#player-grid .cell')[move].classList.contains('miss')) || hitIndex;
         }
 
         function updateShipCount() {
@@ -195,7 +212,7 @@
 
         function resetGame() {
             gameActive = false;
-            startGame(); // ✅ Fix: Now properly resets and starts the game again
+            startGame();
         }
 
         function initializeGame() {
@@ -211,4 +228,5 @@
     </script>
 </body>
 </html>
+
 
