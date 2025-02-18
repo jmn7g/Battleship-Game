@@ -89,11 +89,6 @@
         let aiShips = [];
         let gameActive = false;
         let aiDifficulty = 1;
-        let aiHitStack = []; // Stores AI hits to target adjacent cells
-        let aiTargetDirection = null; // Stores attack direction when AI finds a ship
-        let aiPreviousHits = []; // Stores consecutive hits to determine direction
-        let aiAvailableMoves = new Set([...Array(100).keys()]); // Stores all available moves
-        let aiAttacksHistory = new Set(); // Stores previously attacked cells to avoid re-picking
 
         function createGrid(id, isAI = false) {
             const grid = document.getElementById(id);
@@ -136,11 +131,6 @@
 
         function startGame() {
             gameActive = true;
-            aiHitStack = [];
-            aiTargetDirection = null;
-            aiPreviousHits = [];
-            aiAvailableMoves = new Set([...Array(100).keys()]);
-            aiAttacksHistory.clear(); // Reset AI attack history
             createGrid('player-grid');
             createGrid('ai-grid', true);
             placeShipsRandomly(playerShips);
@@ -151,6 +141,7 @@
                 }
             });
             updateShipCount();
+            document.getElementById('status').textContent = 'Game started! It\'s your turn.';
         }
 
         function playerAttack(index, cell) {
@@ -174,62 +165,27 @@
         function aiTurn() {
             if (!gameActive) return;
             let index;
-
-            // Ensure AI never picks the same grid twice
             do {
-                // Easy mode (AI just picks a random cell)
-                if (aiDifficulty === 1) {
-                    index = Array.from(aiAvailableMoves)[Math.floor(Math.random() * aiAvailableMoves.size)];
-                }
-                // Medium/Hard (AI tries to target hits more intelligently)
-                else {
-                    if (aiHitStack.length > 0) {
-                        index = getNextTarget();
-                    } else {
-                        index = Array.from(aiAvailableMoves)[Math.floor(Math.random() * aiAvailableMoves.size)];
-                    }
-                }
-            } while (aiAttacksHistory.has(index)); // Keep trying until an untried cell is selected
-
-            aiAttacksHistory.add(index); // Mark this attack as used
-            aiAvailableMoves.delete(index); // Remove this move from available choices
+                index = Math.floor(Math.random() * 100);
+            } while (document.querySelectorAll('#player-grid .cell')[index].classList.contains('hit') ||
+                     document.querySelectorAll('#player-grid .cell')[index].classList.contains('miss'));
 
             const playerGridCells = document.querySelectorAll('#player-grid .cell');
             const cell = playerGridCells[index];
 
             if (playerShips.includes(index)) {
-                cell.classList.remove('ship');
-                cell.classList.add('hit');
+                cell.classList.remove('ship'); // ✅ Fix: Remove ship class before marking as hit
+                cell.classList.add('hit'); // ✅ AI hits now turn blue ship blocks red
                 playerShips.splice(playerShips.indexOf(index), 1);
-                aiPreviousHits.push(index);
-                if (aiPreviousHits.length > 1) {
-                    aiTargetDirection = determineDirection(aiPreviousHits[0], aiPreviousHits[1]);
-                }
-                aiHitStack.push(index);
             } else {
                 cell.classList.add('miss');
-                aiTargetDirection = null;
-                aiPreviousHits = [];
             }
-
             updateShipCount();
             if (playerShips.length === 0) {
                 document.getElementById('status').textContent = 'AI wins! Restarting game...';
                 gameActive = false;
                 setTimeout(startGame, 2000);
             }
-        }
-
-        function determineDirection(firstHit, secondHit) {
-            if (Math.abs(firstHit - secondHit) === 1) return "horizontal";
-            if (Math.abs(firstHit - secondHit) === 10) return "vertical";
-            return null;
-        }
-
-        function getNextTarget() {
-            const lastHit = aiHitStack[aiHitStack.length - 1];
-            let possibleMoves = [lastHit - 1, lastHit + 1, lastHit - 10, lastHit + 10];
-            return possibleMoves.find(move => aiAvailableMoves.has(move)) || lastHit;
         }
 
         function updateShipCount() {
@@ -239,7 +195,7 @@
 
         function resetGame() {
             gameActive = false;
-            startGame(); // Now properly resets and starts the game again
+            startGame(); // ✅ Fix: Now properly resets and starts the game again
         }
 
         function initializeGame() {
@@ -255,4 +211,3 @@
     </script>
 </body>
 </html>
-
