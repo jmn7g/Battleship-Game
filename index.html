@@ -42,7 +42,7 @@
         .controls {
             margin: 20px;
         }
-        select, button {
+        button {
             padding: 5px 10px;
             margin: 10px;
         }
@@ -57,12 +57,6 @@
 <body>
     <h1>Battleship</h1>
     <div class="controls">
-        <label for="difficulty">Select AI Difficulty: </label>
-        <select id="difficulty">
-            <option value="1">Beginner</option>
-            <option value="2">Medium</option>
-            <option value="3">Hard</option>
-        </select>
         <button onclick="resetGame()">Reset Game</button>
     </div>
 
@@ -86,8 +80,9 @@
         let playerShips = [];
         let aiShips = [];
         let gameActive = false;
-        let aiDifficulty = 1;
-        let aiHitStack = []; // Stores AI hits for targeting adjacent cells
+        let aiHitStack = []; // Stores AI hits to target adjacent cells
+        let aiTargetDirection = null; // Stores attack direction when AI finds a ship
+        let aiPreviousHit = null; // Stores last hit position to determine direction
 
         function createGrid(id, isAI = false) {
             const grid = document.getElementById(id);
@@ -130,7 +125,9 @@
 
         function startGame() {
             gameActive = true;
-            aiHitStack = []; // Clear AI memory of hits
+            aiHitStack = [];
+            aiTargetDirection = null;
+            aiPreviousHit = null;
             createGrid('player-grid');
             createGrid('ai-grid', true);
             placeShipsRandomly(playerShips);
@@ -165,7 +162,7 @@
             let index;
 
             if (aiHitStack.length > 0) {
-                index = getAdjacentHit(aiHitStack.pop());
+                index = getNextTarget();
             } else {
                 do {
                     index = Math.floor(Math.random() * 100);
@@ -180,10 +177,17 @@
                 cell.classList.remove('ship');
                 cell.classList.add('hit');
                 playerShips.splice(playerShips.indexOf(index), 1);
-                aiHitStack.push(index); // Store the hit position for targeting adjacent cells
+                if (aiPreviousHit !== null) {
+                    aiTargetDirection = determineDirection(aiPreviousHit, index);
+                }
+                aiPreviousHit = index;
+                aiHitStack.push(index);
             } else {
                 cell.classList.add('miss');
+                aiTargetDirection = null;
+                aiPreviousHit = null;
             }
+
             updateShipCount();
             if (playerShips.length === 0) {
                 gameActive = false;
@@ -191,18 +195,28 @@
             }
         }
 
-        function getAdjacentHit(hitIndex) {
-            let possibleMoves = [];
-            let row = Math.floor(hitIndex / 10);
-            let col = hitIndex % 10;
+        function determineDirection(firstHit, secondHit) {
+            if (Math.abs(firstHit - secondHit) === 1) return "horizontal";
+            if (Math.abs(firstHit - secondHit) === 10) return "vertical";
+            return null;
+        }
 
-            if (col > 0) possibleMoves.push(hitIndex - 1); // Left
-            if (col < 9) possibleMoves.push(hitIndex + 1); // Right
-            if (row > 0) possibleMoves.push(hitIndex - 10); // Up
-            if (row < 9) possibleMoves.push(hitIndex + 10); // Down
+        function getNextTarget() {
+            const lastHit = aiHitStack[aiHitStack.length - 1];
+            let possibleMoves = [];
+            let row = Math.floor(lastHit / 10);
+            let col = lastHit % 10;
+
+            if (aiTargetDirection === "horizontal") {
+                if (col > 0) possibleMoves.push(lastHit - 1); // Left
+                if (col < 9) possibleMoves.push(lastHit + 1); // Right
+            } else if (aiTargetDirection === "vertical") {
+                if (row > 0) possibleMoves.push(lastHit - 10); // Up
+                if (row < 9) possibleMoves.push(lastHit + 10); // Down
+            }
 
             return possibleMoves.find(move => !document.querySelectorAll('#player-grid .cell')[move].classList.contains('hit') &&
-                                              !document.querySelectorAll('#player-grid .cell')[move].classList.contains('miss')) || hitIndex;
+                                              !document.querySelectorAll('#player-grid .cell')[move].classList.contains('miss')) || lastHit;
         }
 
         function updateShipCount() {
@@ -215,18 +229,10 @@
             startGame();
         }
 
-        function initializeGame() {
-            createGrid('player-grid');
-            createGrid('ai-grid', true);
-            document.getElementById('difficulty').addEventListener('change', (e) => {
-                aiDifficulty = parseInt(e.target.value);
-            });
-            startGame();
-        }
-
         initializeGame();
     </script>
 </body>
 </html>
+
 
 
