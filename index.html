@@ -93,6 +93,7 @@
         let aiTargetDirection = null; // Stores attack direction when AI finds a ship
         let aiPreviousHits = []; // Stores consecutive hits to determine direction
         let aiAvailableMoves = new Set([...Array(100).keys()]); // Stores all available moves
+        let aiAttacksHistory = new Set(); // Stores previously attacked cells to avoid re-picking
 
         function createGrid(id, isAI = false) {
             const grid = document.getElementById(id);
@@ -139,6 +140,7 @@
             aiTargetDirection = null;
             aiPreviousHits = [];
             aiAvailableMoves = new Set([...Array(100).keys()]);
+            aiAttacksHistory.clear(); // Reset AI attack history
             createGrid('player-grid');
             createGrid('ai-grid', true);
             placeShipsRandomly(playerShips);
@@ -173,19 +175,23 @@
             if (!gameActive) return;
             let index;
 
-            // Easy mode (AI just picks a random cell)
-            if (aiDifficulty === 1) {
-                index = Array.from(aiAvailableMoves)[Math.floor(Math.random() * aiAvailableMoves.size)];
-            }
-            // Medium & Hard modes (AI tries to target hits more intelligently)
-            else {
-                if (aiHitStack.length > 0) {
-                    index = getNextTarget();
-                } else {
+            // Ensure AI never picks the same grid twice
+            do {
+                // Easy mode (AI just picks a random cell)
+                if (aiDifficulty === 1) {
                     index = Array.from(aiAvailableMoves)[Math.floor(Math.random() * aiAvailableMoves.size)];
                 }
-            }
+                // Medium/Hard (AI tries to target hits more intelligently)
+                else {
+                    if (aiHitStack.length > 0) {
+                        index = getNextTarget();
+                    } else {
+                        index = Array.from(aiAvailableMoves)[Math.floor(Math.random() * aiAvailableMoves.size)];
+                    }
+                }
+            } while (aiAttacksHistory.has(index)); // Keep trying until an untried cell is selected
 
+            aiAttacksHistory.add(index); // Mark this attack as used
             aiAvailableMoves.delete(index); // Remove this move from available choices
 
             const playerGridCells = document.querySelectorAll('#player-grid .cell');
@@ -249,4 +255,3 @@
     </script>
 </body>
 </html>
-
